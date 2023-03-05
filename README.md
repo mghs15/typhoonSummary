@@ -11,7 +11,7 @@
 * 令和4年台風14号
   * https://mghs15.github.io/typhoonSummary/?data=2022T14&style=mono2
 
-## データの整備
+## データの収集と加工
 ### 台風の経路
 
 気象庁の「台風位置表」で得られるデータから作成する。
@@ -64,3 +64,5 @@ https://www.data.jma.go.jp/gmd/kaiyou/db/tide/genbo/index.php
 * 国土地理院 最適化ベクトルタイル https://github.com/gsi-cyberjapan/optimal_bvmap
 * Mapbox GL JS https://github.com/mapbox/mapbox-gl-js
 * Chart.js https://www.chartjs.org/
+  * chartjs-adapter-moment https://github.com/chartjs/chartjs-adapter-moment
+* https://mat0401.info/blog/chartjs-timeline/
