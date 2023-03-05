@@ -5,11 +5,11 @@
 
 とりあえず、以下の3台風を整理。
 * 令和元年台風19号
- * https://mghs15.github.io/typhoonSummary/?data=2019T19&style=mono2
+  * https://mghs15.github.io/typhoonSummary/?data=2019T19&style=mono2
 * 令和2年台風10号
- * https://mghs15.github.io/typhoonSummary/?data=2020T10&style=mono2
+  * https://mghs15.github.io/typhoonSummary/?data=2020T10&style=mono2
 * 令和4年台風14号
- * https://mghs15.github.io/typhoonSummary/?data=2022T14&style=mono2
+  * https://mghs15.github.io/typhoonSummary/?data=2022T14&style=mono2
 
 ## データの整備
 ### 台風の経路
