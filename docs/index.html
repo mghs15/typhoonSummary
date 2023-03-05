@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>T-Summary</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<link rel="icon" type="image/x-icon" href="">
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.13.2/mapbox-gl.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.13.2/mapbox-gl.css' rel='stylesheet' />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+<style>
+body { margin:0; padding:0; }
+#wrap {
+  margin: 16px;
+}
+#map {
+  height: 300px;
+  width: 100%;
+}
+.chart {
+  max-height: 150px;
+  width: 100%;
+}
+#reference {
+  background-color: #EEEEEE;
+  text-align: center;
+  font-size: 0.8em;
+}
+#reference div.ref {
+  display: inline-block;
+  margin: 2px 4px;
+}
+
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="title"></div>
+  <div id="mapArea">
+    <div id="map"></div>
+  </div>
+  <div id="chartsArea">
+    <canvas id="atmChart" class="chart"></canvas >
+    <canvas id="rainChart" class="chart"></canvas >
+    <canvas id="windChart" class="chart"></canvas >
+    <canvas id="tideChart" class="chart"></canvas >
+  </div>
+</div>
+<div id="reference">
+  <div>参考文献</div>
+  <div class="ref"><a target="_blank" href="https://www.data.jma.go.jp/yoho/typhoon/position_table/index.html">気象庁 台風位置表</a></div> | 
+  <div class="ref"><a target="_blank" href="https://www.data.jma.go.jp/obd/stats/etrn/index.php">気象庁 過去の気象データ検索</a></div> | 
+  <div class="ref"><a target="_blank" href="https://www.data.jma.go.jp/gmd/kaiyou/db/tide/genbo/index.php">気象庁 潮汐観測資料</a></div> | 
+  <div class="ref"><a target="_blank" href="https://github.com/gsi-cyberjapan/optimal_bvmap">国土地理院 最適化ベクトルタイル</a></div>
+</div>
+
+<script>
+
+/*************************************************/
+/*データ読込 関係設定                            */
+/*************************************************/
+
+const getQueryParams = () => {
+  const q = window.location.search;
+  const qq = q.slice(1);
+  const qset = qq.split("&");
+  const qobj = {};
+  qset.forEach( c => {
+    const cc = c.split("=");
+    qobj[cc[0]] = cc[1];
+  });
+  
+  return qobj;
+}
+
+const loadJSON = function(path){
+  
+  let data;
+  
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', path, false);
+  xhr.send(null);
+  
+  if(xhr.status == 200 || xhr.status == 304){
+    data = JSON.parse(xhr.responseText);
+  }
+  
+  return data;
+}
+
+const qobj = getQueryParams();
+
+const path = qobj.data || "data";
+
+const style = qobj.style || "dark2";
+
+const data = loadJSON(`./${path}.json`);
+
+
+//気圧用のデータ
+const ap = {
+  "labels": [],
+  "datasets": [{
+     "label": "中心気圧",
+     "data": [],
+     "borderWidth": 1
+  }]
+};
+
+data.route.features.forEach( f => {
+  if(f.geometry.type == "Point"){
+    const p = f.properties;
+    ap.labels.push(`${data.metadata.year}/${p.month}/${p.date} ${p.hour}:00`);
+    ap.datasets[0].data.push(p.atm);
+  }
+}); 
+
+document.getElementById('title').innerText = data.metadata.typhoon;
+
+/*************************************************/
+/*chart.js 関係設定                              */
+/*************************************************/
+
+const ctxAtm = document.getElementById('atmChart');
+
+console.log(data.metadata.year, data.metadata.from, " - ", data.metadata.to);
+console.log(Date.parse(data.metadata.from));
+console.log( new Date(data.metadata.to));
+
+const timeScalesOption = {
+  // [reference] https://mat0401.info/blog/chartjs-timeline/
+  scales: {
+    x: {
+      type: "time",
+      /*
+      min: new Date(data.metadata.from),
+      max: new Date(data.metadata.to),
+      */
+      min: data.metadata.from,
+      max: data.metadata.to,
+      time: {
+        parser: "YYYY/MM/DD HH:mm",
+        unit: "hour",
+        stepSize: 6,
+        displayFormats: {
+          hour: "D日HH時"
+        },
+      },
+    },
+    y: {
+      ticks: {
+        callback: (value, index, ticks) => {
+          const v = value + "";
+          return v.padStart(4, '=');
+        },
+        //backdropColor: 'rgba(255, 255, 0, 1)',
+        //color: 'rgba(255, 0, 0, 1)',
+        //display: false,
+      }
+    }
+  },
+  layout: {
+      padding: {
+      }
+  }
+};
+
+
+const atmChart = new Chart(ctxAtm, {
+  type: 'line',
+  data: ap,
+  options: timeScalesOption 
+});
+
+const ctxRain = document.getElementById('rainChart');
+
+const rainChart = new Chart(ctxRain, {
+  type: 'bar',
+  data: data.chart.rain,
+  options: timeScalesOption 
+});
+
+const ctxWind = document.getElementById('windChart');
+
+const windChart = new Chart(ctxWind, {
+  type: 'line',
+  data: data.chart.wind,
+  options: timeScalesOption 
+});
+
+const ctxTide = document.getElementById('tideChart');
+
+const tideChart = new Chart(ctxTide, {
+  type: 'line',
+  data: data.chart.tide,
+  options: timeScalesOption 
+});
+
+/*************************************************/
+/*Mapbox 関係設定                                */
+/*************************************************/
+const map = new mapboxgl.Map({
+  container: 'map', // container id
+  hash: true, //add #position on URL
+  style: 'https://mghs15.github.io/styling-tools-for-gsi-optbv/' + style + '.json', // stylesheet location
+  center: [139.78148, 35.768793], // starting position [lng, lat]
+  zoom: 4, // starting zoom
+  bearing: -90,
+  minZoom: 4,
+  maxZoom: 17.99,
+  localIdeographFontFamily: ['MS Gothic', 'Hiragino Kaku Gothic Pro', 'sans-serif']
+});
+
+
+map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+map.addControl(new mapboxgl.ScaleControl() );
+
+
+/*************************************************/
+/*地図データ 関係設定                            */
+/*************************************************/
+
+map.on('load', () => {
+  addAditionalLayer();
+});
+
+const addAditionalLayer = () => {
+
+  const sourceid = 'route';
+  map.addSource(sourceid, {
+    type: 'geojson',
+    data: data.route
+  });
+  
+  map.addLayer({
+    'id': 'route-line',
+    'type': 'line',
+    'source': sourceid,
+    'filter': [
+      "==", ["geometry-type"], "LineString"
+    ],
+    'layout': {
+      'visibility': 'visible'
+    },
+    'paint': {
+      'line-color': ['rgba', 255, 0, 0, 1],
+      'line-width': 2
+    }
+  });
+  
+  map.addLayer({
+    'id': 'route-points',
+    'type': 'circle',
+    'source': sourceid,
+    'filter': [
+      "==", ["geometry-type"], "Point"
+    ],
+    'layout': {
+      'visibility': 'visible'
+    },
+    'paint': {
+      'circle-radius': [
+        "interpolate", ["linear"], ["zoom"],
+        11,4,
+        15,8
+      ],
+      'circle-color': ['rgba', 255, 0, 0, 1],
+      'circle-stroke-color': ['rgba', 255, 255, 255, 1],
+      'circle-stroke-width': 1
+    }
+  });
+  
+  map.addLayer({
+    'id': 'route-points-name',
+    'type': 'symbol',
+    'source': sourceid,
+    'filter': [
+      "==", ["geometry-type"], "Point"
+    ],
+    'layout': {
+      'text-field': ["concat",
+        ["get", "date"], "日",
+        ["get", "hour"], "時"
+      ],
+      'text-size': 12,
+      'text-variable-anchor': ["left", "top", "right", "bottom"],
+      'text-font': ["NotoSansJP-Regular"],
+      'text-allow-overlap': false,
+      'visibility': 'visible'
+    },
+    'paint': {
+      'text-color': ['rgb', 255, 0, 0],
+      'text-halo-color': ['rgba', 255, 255, 255, 1],
+      'text-halo-width': 2
+    },
+  });
+}
+
+/*************************************************/
+/*地図ポップアップ 関係設定                      */
+/*************************************************/
+
+const makePopupHtml = (feature) => {
+  
+  const prop = feature.properties
+  
+  let htmlString = ""; //ポップアップ
+  let featureProperties = "";
+  for(name in prop){
+    if(name.match(/^_/)) continue;
+    featureProperties = featureProperties + "<tr><td style='vertical-align:top; color:#555555;'>" + name + "</td>"
+                      + "<td style='color:#000000;'>" + prop[name] + "</td></tr>";
+  }
+  htmlString = htmlString + "<table class='popup-table'>" + featureProperties + "</table>";
+  
+  return htmlString;
+  
+}
+
+const popup = new mapboxgl.Popup({
+  //closeOnClick: false,
+});
+
+const openPopupFunc = (e) => {
+
+  //初期化
+  popup.remove();
+  
+  //レンダリングされた地物を取得
+  const targetLayers = ['route-points'];
+  const sv = 5;
+  const bb = [
+    [e.point.x - sv, e.point.y - sv],
+    [e.point.x + sv, e.point.y + sv]
+  ];
+  const features = map.queryRenderedFeatures(bb, {layers: targetLayers});
+  
+  if(!features.length) {
+    return;
+  } 
+  
+  //ポップアップ表示処理
+  let htmlString = "";
+  features.forEach( feature => {
+    htmlString = htmlString + makePopupHtml(feature);
+    console.log(feature.properties);
+  });
+  
+  if(!htmlString || htmlString == "") {
+    return;
+  }
+  
+  popup.setLngLat([ e.lngLat.lng, e.lngLat.lat ])
+    .setHTML(htmlString)
+    .addTo(map);
+    
+}
+
+map.on('click', (e) => {
+  openPopupFunc(e);
+});
+
+</script>
+
+</body>
+</html>
+
