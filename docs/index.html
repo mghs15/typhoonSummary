@@ -19,6 +19,11 @@ body { margin:0; padding:0; }
   height: 300px;
   width: 100%;
 }
+
+#chartsArea .typhoon {
+  border-bottom: solid 4px #BBBBBB;
+}
+
 .chart {
   max-height: 150px;
   width: 100%;
@@ -42,10 +47,16 @@ body { margin:0; padding:0; }
     <div id="map"></div>
   </div>
   <div id="chartsArea">
-    <canvas id="atmChart" class="chart"></canvas >
-    <canvas id="rainChart" class="chart"></canvas >
-    <canvas id="windChart" class="chart"></canvas >
-    <canvas id="tideChart" class="chart"></canvas >
+    <div class="typhoon">
+      <canvas id="atmChart" class="chart"></canvas>
+      <canvas id="maxWindChart" class="chart"></canvas>
+    </div>
+    <div class="city">
+      <canvas id="rainChart" class="chart"></canvas>
+      <canvas id="windChart" class="chart"></canvas>
+      <canvas id="tideChart" class="chart"></canvas>
+      <canvas id="tideDiffChart" class="chart"></canvas>
+    </div>
   </div>
 </div>
 <div id="reference">
@@ -94,7 +105,7 @@ const qobj = getQueryParams();
 
 const path = qobj.data || "data";
 
-const style = qobj.style || "dark2";
+const style = qobj.style || "mono2";
 
 const data = loadJSON(`./${path}.json`);
 
@@ -117,13 +128,31 @@ data.route.features.forEach( f => {
   }
 }); 
 
+
+//最大風速用のデータ
+const maxwind = {
+  "labels": [],
+  "datasets": [{
+     "label": "最大風速",
+     "data": [],
+     "borderWidth": 1
+  }]
+};
+
+data.route.features.forEach( f => {
+  if(f.geometry.type == "Point"){
+    const p = f.properties;
+    maxwind.labels.push(`${data.metadata.year}/${p.month}/${p.date} ${p.hour}:00`);
+    maxwind.datasets[0].data.push(p["max-wind"]);
+  }
+}); 
+
 document.getElementById('title').innerText = data.metadata.typhoon;
 
 /*************************************************/
 /*chart.js 関係設定                              */
 /*************************************************/
 
-const ctxAtm = document.getElementById('atmChart');
 
 console.log(data.metadata.year, data.metadata.from, " - ", data.metadata.to);
 console.log(Date.parse(data.metadata.from));
@@ -168,11 +197,22 @@ const timeScalesOption = {
 };
 
 
+const ctxAtm = document.getElementById('atmChart');
+
 const atmChart = new Chart(ctxAtm, {
   type: 'line',
   data: ap,
   options: timeScalesOption 
 });
+
+const ctxMaxWind = document.getElementById('maxWindChart');
+
+const maxWindChart = new Chart(ctxMaxWind, {
+  type: 'line',
+  data: maxwind,
+  options: timeScalesOption 
+});
+
 
 const ctxRain = document.getElementById('rainChart');
 
@@ -195,6 +235,14 @@ const ctxTide = document.getElementById('tideChart');
 const tideChart = new Chart(ctxTide, {
   type: 'line',
   data: data.chart.tide,
+  options: timeScalesOption 
+});
+
+const ctxTideDiff = document.getElementById('tideDiffChart');
+
+const tideDiffChart = new Chart(ctxTideDiff, {
+  type: 'line',
+  data: data.chart.tidediff,
   options: timeScalesOption 
 });
 
@@ -251,6 +299,35 @@ const addAditionalLayer = () => {
   });
   
   map.addLayer({
+    'id': 'route-points-name',
+    'type': 'symbol',
+    'source': sourceid,
+    'filter': [
+      "==", ["geometry-type"], "Point"
+    ],
+    'layout': {
+      'text-field': ["concat",
+        ["get", "date"], "日",
+        ["get", "hour"], "時"
+      ],
+      'text-size': 12,
+      //'text-variable-anchor': ["left", "top", "right", "bottom"],
+      //'text-radial-offset': 0,
+      'text-anchor': "left",
+      'text-offset': [0.5, 0],
+      'text-rotate': 315,
+      'text-font': ["NotoSansJP-Regular"],
+      'text-allow-overlap': false,
+      'visibility': 'visible'
+    },
+    'paint': {
+      'text-color': ['rgb', 255, 0, 0],
+      'text-halo-color': ['rgba', 255, 255, 255, 1],
+      'text-halo-width': 2
+    },
+  });
+  
+  map.addLayer({
     'id': 'route-points',
     'type': 'circle',
     'source': sourceid,
@@ -272,30 +349,6 @@ const addAditionalLayer = () => {
     }
   });
   
-  map.addLayer({
-    'id': 'route-points-name',
-    'type': 'symbol',
-    'source': sourceid,
-    'filter': [
-      "==", ["geometry-type"], "Point"
-    ],
-    'layout': {
-      'text-field': ["concat",
-        ["get", "date"], "日",
-        ["get", "hour"], "時"
-      ],
-      'text-size': 12,
-      'text-variable-anchor': ["left", "top", "right", "bottom"],
-      'text-font': ["NotoSansJP-Regular"],
-      'text-allow-overlap': false,
-      'visibility': 'visible'
-    },
-    'paint': {
-      'text-color': ['rgb', 255, 0, 0],
-      'text-halo-color': ['rgba', 255, 255, 255, 1],
-      'text-halo-width': 2
-    },
-  });
 }
 
 /*************************************************/
