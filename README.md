@@ -54,7 +54,7 @@ https://www.data.jma.go.jp/gmd/kaiyou/db/tide/genbo/index.php
 
 ※潮位偏差の場合も同様。その際は上記 2. で「毎時潮位偏差」を選択肢、5. で `tide-diff.js` を利用する。
 
-### メタデータの準備
+## データの統合
 
 1. 表示する対象期間、観測場所等を記載した `metadata.json` も作成し、他のデータとともに src フォルダに格納しておく。 
 ```
