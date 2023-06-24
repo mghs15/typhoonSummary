@@ -1,8 +1,8 @@
 const fs = require('fs');
 
-const basefilename = 'tide';
-const title = '潮位';
-const keyName = 'tide';
+const basefilename = 'tide-diff';
+const title = '毎時潮位偏差';
+const keyName = 'tidediff';
 
 const d = fs.readFileSync(`./src/${basefilename}.txt`, 'utf8');
 

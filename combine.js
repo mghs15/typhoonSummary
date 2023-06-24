@@ -5,11 +5,12 @@ const metadata = require(`./src/metadata.json`);
 const dataset = require(`./dat/dataset.json`);
 const route = require(`./dat/route.json`);
 const tide = require(`./dat/tide.json`);
+const tidediff = require(`./dat/tide-diff.json`);
 
 const set = {
   "metadata": metadata,
   "chart": {
-    ...dataset, ...tide
+    ...dataset, ...tide, ...tidediff
   },
   "route": route
 }

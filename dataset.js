@@ -2,7 +2,7 @@ const fs = require('fs');
 
 const basefilename = 'dataset';
 
-const d = fs.readFileSync(`./src/${basefilename}.csv`, 'utf8');
+const d = fs.readFileSync(`./src/${basefilename}.txt`, 'utf8');
 
 const main = (d) => {
 
