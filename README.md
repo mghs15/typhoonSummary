@@ -3,12 +3,14 @@
 
 **データの精査等は行っておりません。本レポジトリ・ページの利用により生じた損失及び損害等について、当方はいかなる責任も負わないものとします。**
 
-とりあえず、以下の3台風を整理。
-* 令和元年台風19号
+とりあえず、以下の台風を整理。
+* 平成31年台風第21号
+  * https://mghs15.github.io/typhoonSummary/?data=2018T21&style=mono2
+* 令和元年台風第19号
   * https://mghs15.github.io/typhoonSummary/?data=2019T19&style=mono2
-* 令和2年台風10号
+* 令和2年台風第10号
   * https://mghs15.github.io/typhoonSummary/?data=2020T10&style=mono2
-* 令和4年台風14号
+* 令和4年台風第14号
   * https://mghs15.github.io/typhoonSummary/?data=2022T14&style=mono2
 
 ## データの収集と加工
@@ -67,7 +69,7 @@ https://www.data.jma.go.jp/gmd/kaiyou/db/tide/genbo/index.php
   "rain": "東京"
 }
 ```
-2. `combine.js` で dat フォルダ内の各データを統合し、Web サイト用のデータとする。結果は docs フォルダへ出力される。
+2. `combine.js` で dat フォルダ内の各データと serc フォルダの `metadata.json` を統合し、Web サイト用のデータとする。結果は docs フォルダへ出力される。
 
 ## データの表示
 * 台風の経路は 地図上へ表示。Web 地図ライブラリは Mapbox GL JS、地図データは国土地理院最適化ベクトルタイルを利用。
