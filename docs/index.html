@@ -5,8 +5,10 @@
 <title>T-Summary</title>
 <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 <link rel="icon" type="image/x-icon" href="">
-<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.13.2/mapbox-gl.js'></script>
-<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.13.2/mapbox-gl.css' rel='stylesheet' />
+<script src='https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js'></script>
+<link href='https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css' rel='stylesheet' />
+<script src='https://unpkg.com/pmtiles@2.5.0/dist/index.js'></script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/moment"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
@@ -247,9 +249,13 @@ const tideDiffChart = new Chart(ctxTideDiff, {
 });
 
 /*************************************************/
-/*Mapbox 関係設定                                */
+/*MapLibre+PMTiles 関係設定                      */
 /*************************************************/
-const map = new mapboxgl.Map({
+
+let protocol = new pmtiles.Protocol();
+maplibregl.addProtocol("pmtiles", protocol.tile);
+
+const map = new maplibregl.Map({
   container: 'map', // container id
   hash: true, //add #position on URL
   style: 'https://mghs15.github.io/styling-tools-for-gsi-optbv/' + style + '.json', // stylesheet location
@@ -262,8 +268,8 @@ const map = new mapboxgl.Map({
 });
 
 
-map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-map.addControl(new mapboxgl.ScaleControl() );
+map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+map.addControl(new maplibregl.ScaleControl() );
 
 
 /*************************************************/
@@ -372,7 +378,7 @@ const makePopupHtml = (feature) => {
   
 }
 
-const popup = new mapboxgl.Popup({
+const popup = new maplibregl.Popup({
   //closeOnClick: false,
 });
 
